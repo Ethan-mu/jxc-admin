@@ -487,13 +487,21 @@ export default {
                         return Promise.reject(new Error('没有数据可供导出'))
                     }
                     
-                    // 有数据可以导出，使用表单提交方式下载文件
+                    // 确认有数据可以导出，现在使用form提交方式
                     const form = document.createElement('form')
                     form.method = 'post'
-                    form.action = `${process.env.VUE_APP_BASE_API || ''}/admin/document/qualification/export`
+                    form.action = '/admin/document/qualification/export' // 使用相对路径
                     form.target = '_blank'
                     
-                    // 添加参数
+                    // 添加一个时间戳参数以避免缓存
+                    const timestamp = new Date().getTime()
+                    const timestampInput = document.createElement('input')
+                    timestampInput.type = 'hidden'
+                    timestampInput.name = '_t'
+                    timestampInput.value = timestamp
+                    form.appendChild(timestampInput)
+                    
+                    // 添加搜索参数
                     for (const key in params) {
                         if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
                             const input = document.createElement('input')
@@ -504,20 +512,32 @@ export default {
                         }
                     }
                     
-                    // 添加token到header中
-                    if (this.$store.state.user.token) {
+                    // 添加token (如果有)
+                    if (this.$store.state.user && this.$store.state.user.token) {
                         const tokenInput = document.createElement('input')
                         tokenInput.type = 'hidden'
-                        tokenInput.name = 'X-Token'
+                        tokenInput.name = 'token'
                         tokenInput.value = this.$store.state.user.token
                         form.appendChild(tokenInput)
+                        
+                        // 同时添加到HTTP头中
+                        const tokenHeader = document.createElement('input')
+                        tokenHeader.type = 'hidden'
+                        tokenHeader.name = 'X-Token'
+                        tokenHeader.value = this.$store.state.user.token
+                        form.appendChild(tokenHeader)
                     }
                     
+                    // 添加到body并提交
                     document.body.appendChild(form)
                     form.submit()
-                    document.body.removeChild(form)
                     
-                    this.$message.success(`成功导出${result.total}条数据，文件很快将被下载`)
+                    // 提交后移除表单
+                    setTimeout(() => {
+                        document.body.removeChild(form)
+                    }, 100)
+                    
+                    this.$message.success(`正在导出${result.total}条数据，请等待下载完成`)
                 })
                 .catch(error => {
                     console.error('导出失败:', error)
