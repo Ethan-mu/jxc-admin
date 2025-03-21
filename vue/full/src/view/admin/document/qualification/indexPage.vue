@@ -475,74 +475,71 @@ export default {
             // 显示加载提示
             this.$message.info('正在准备导出数据，请稍候...')
             
-            // 先进行一次校验请求，确认是否有数据可以导出
-            request.post('/admin/document/qualification/search', params)
-                .then(response => {
-                    const result = this.processResponseData(response)
-                    if (!result.success) {
-                        return Promise.reject(new Error(result.msg || '查询数据失败'))
-                    }
-                    
-                    if (result.total === 0) {
-                        return Promise.reject(new Error('没有数据可供导出'))
-                    }
-                    
-                    // 确认有数据可以导出，现在使用form提交方式
-                    const form = document.createElement('form')
-                    form.method = 'post'
-                    form.action = '/admin/document/qualification/export' // 使用相对路径
-                    form.target = '_blank'
-                    
-                    // 添加一个时间戳参数以避免缓存
-                    const timestamp = new Date().getTime()
-                    const timestampInput = document.createElement('input')
-                    timestampInput.type = 'hidden'
-                    timestampInput.name = '_t'
-                    timestampInput.value = timestamp
-                    form.appendChild(timestampInput)
-                    
-                    // 添加搜索参数
-                    for (const key in params) {
-                        if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
-                            const input = document.createElement('input')
-                            input.type = 'hidden'
-                            input.name = key
-                            input.value = params[key]
-                            form.appendChild(input)
-                        }
-                    }
-                    
-                    // 添加token (如果有)
-                    if (this.$store.state.user && this.$store.state.user.token) {
-                        const tokenInput = document.createElement('input')
-                        tokenInput.type = 'hidden'
-                        tokenInput.name = 'token'
-                        tokenInput.value = this.$store.state.user.token
-                        form.appendChild(tokenInput)
+            // 使用axios直接下载文件
+            request({
+                url: '/admin/document/qualification/export',
+                method: 'post',
+                data: params,
+                responseType: 'blob'
+            })
+            .then(response => {
+                // 创建blob对象
+                const blob = new Blob([response.data])
+                
+                // 创建下载链接
+                const downloadElement = document.createElement('a')
+                const href = window.URL.createObjectURL(blob) // 创建下载的链接
+                
+                // 处理文件名
+                let filename = '公司资质证书.xlsx'
+                const disposition = response.headers['content-disposition']
+                
+                if (disposition) {
+                    // 尝试从Content-Disposition中提取文件名
+                    try {
+                        // 先尝试提取UTF-8编码的文件名
+                        const utf8FilenameRegex = /filename\*=UTF-8''([^;]*)/i
+                        const matches = utf8FilenameRegex.exec(disposition)
                         
-                        // 同时添加到HTTP头中
-                        const tokenHeader = document.createElement('input')
-                        tokenHeader.type = 'hidden'
-                        tokenHeader.name = 'X-Token'
-                        tokenHeader.value = this.$store.state.user.token
-                        form.appendChild(tokenHeader)
+                        if (matches && matches[1]) {
+                            // URL解码
+                            filename = decodeURIComponent(matches[1])
+                        } else {
+                            // 尝试提取普通文件名
+                            const filenameRegex = /filename=["']?([^"';]*)/i
+                            const plainMatches = filenameRegex.exec(disposition)
+                            
+                            if (plainMatches && plainMatches[1]) {
+                                filename = plainMatches[1]
+                                
+                                // 尝试处理可能的URL编码
+                                try {
+                                    filename = decodeURIComponent(filename)
+                                } catch (e) {
+                                    console.warn('文件名解码失败', e)
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('提取文件名失败:', e)
                     }
-                    
-                    // 添加到body并提交
-                    document.body.appendChild(form)
-                    form.submit()
-                    
-                    // 提交后移除表单
-                    setTimeout(() => {
-                        document.body.removeChild(form)
-                    }, 100)
-                    
-                    this.$message.success(`正在导出${result.total}条数据，请等待下载完成`)
-                })
-                .catch(error => {
-                    console.error('导出失败:', error)
-                    this.$message.error(error.message || '导出失败，请稍后重试')
-                })
+                }
+                
+                console.log('提取的文件名:', filename)
+                
+                downloadElement.href = href
+                downloadElement.download = filename
+                document.body.appendChild(downloadElement)
+                downloadElement.click() // 点击下载
+                document.body.removeChild(downloadElement) // 下载完成移除元素
+                window.URL.revokeObjectURL(href) // 释放blob对象
+                
+                this.$message.success('文件下载成功')
+            })
+            .catch(error => {
+                console.error('导出失败:', error)
+                this.$message.error('导出失败，请稍后重试')
+            })
         },
         
         // 处理预警操作
