@@ -27,7 +27,6 @@
                     <el-button type="primary" icon="el-icon-search" @click="refresh(true)">查询</el-button>
                     <el-button v-if="canAdd" type="success" icon="el-icon-plus" @click="add">新增</el-button>
                     <el-button type="info" icon="el-icon-download" @click="exportData">导出</el-button>
-                    <el-button type="warning" @click="testQueryAll">测试查询全部</el-button>
                 </el-form-item>
             </el-form>
 
@@ -268,14 +267,6 @@ export default {
         this.refresh()
     },
 
-    mounted() {
-        // 延迟执行，避免与初始加载冲突
-        setTimeout(() => {
-            console.log('---执行测试查询---')
-            this.testQueryAll()
-        }, 1000)
-    },
-
     methods: {
         // 处理API响应数据，统一返回格式
         processResponseData(response) {
@@ -399,47 +390,6 @@ export default {
                 })
         },
         
-        // 测试方法：直接查询所有证书（不带过滤条件）
-        testQueryAll() {
-            // 最简单的查询参数，只包含分页信息
-            const params = {
-                page: 1,
-                pageSize: 100
-            }
-            
-            console.log('测试查询所有记录 - 参数:', JSON.stringify(params))
-            // 调用后端接口
-            request.post('/admin/document/qualification/search', params)
-                .then(response => {
-                    console.log('测试查询所有记录 - 完整响应:', response)
-                    
-                    // 使用统一的响应处理方法
-                    const result = this.processResponseData(response)
-                    console.log('测试查询 - 处理后的数据:', result)
-                    
-                    if (result.success) {
-                        this.data = result.list
-                        this.total = result.total
-                        
-                        if (this.data.length === 0) {
-                            this.$message.warning('未查询到任何记录，请检查数据库表是否有数据')
-                        } else {
-                            this.$message.success(`成功查询到 ${this.data.length} 条记录`)
-                        }
-                    } else {
-                        this.$message.error(result.msg)
-                        this.data = []
-                        this.total = 0
-                    }
-                })
-                .catch(error => {
-                    console.error('测试查询失败', error)
-                    this.data = []
-                    this.total = 0
-                    this.$message.error('查询失败，请检查控制台')
-                })
-        },
-
         // 获取预警状态类型
         getAlertStatusType(status) {
             const types = {
@@ -522,26 +472,43 @@ export default {
                 ...this.search
             }
             
-            // 创建一个隐藏的表单来提交 POST 请求
-            const form = document.createElement('form')
-            form.method = 'post'
-            form.action = '/api/admin/document/qualification/export'
-            form.target = '_blank'
+            // 显示加载提示
+            this.$message.info('正在准备导出数据，请稍候...')
             
-            // 为每个参数创建一个隐藏的 input
-            for (const key in params) {
-                if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
-                    const input = document.createElement('input')
-                    input.type = 'hidden'
-                    input.name = key
-                    input.value = params[key]
-                    form.appendChild(input)
+            // 使用request发送请求，指定responseType为blob
+            request({
+                method: 'post',
+                url: '/admin/document/qualification/export',
+                data: params,
+                responseType: 'blob'
+            }).then(response => {
+                // 创建一个Blob对象
+                const blob = new Blob([response.data], { type: response.headers['content-type'] })
+                
+                // 获取文件名
+                let fileName = '公司资质证书导出.xlsx'
+                const contentDisposition = response.headers['content-disposition']
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename=(.+)/)
+                    if (filenameMatch && filenameMatch.length > 1) {
+                        fileName = decodeURIComponent(filenameMatch[1])
+                    }
                 }
-            }
-            
-            document.body.appendChild(form)
-            form.submit()
-            document.body.removeChild(form)
+                
+                // 创建下载链接
+                const link = document.createElement('a')
+                link.href = URL.createObjectURL(blob)
+                link.download = fileName
+                link.click()
+                
+                // 释放URL对象
+                URL.revokeObjectURL(link.href)
+                
+                this.$message.success('导出成功')
+            }).catch(error => {
+                console.error('导出失败:', error)
+                this.$message.error('导出失败，请稍后重试')
+            })
         },
         
         // 处理预警操作
