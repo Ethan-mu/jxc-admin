@@ -46,18 +46,13 @@ public class ExcelUtil {
         String name = URLEncoder.encode(filename, "utf-8") + ".xlsx";
         response.setHeader("Content-disposition", "attachment;filename=" + name);
         response.setCharacterEncoding("utf-8");
+        response.setContentType("application/vnd.ms-excel");
 
         int size = list.size();
         if (size == 0) {
             WebUtil.responseJson(response, R.fail("当前没有能导出的数据"));
             return;
         }
-        else if (size < 10000) {
-            WebUtil.responseJson(response, R.success(list));
-            return;
-        }
-
-        response.setContentType("application/vnd.ms-excel");
 
         Class clazz = list.get(0).getClass();
 

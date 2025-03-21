@@ -475,40 +475,54 @@ export default {
             // 显示加载提示
             this.$message.info('正在准备导出数据，请稍候...')
             
-            // 使用request发送请求，指定responseType为blob
-            request({
-                method: 'post',
-                url: '/admin/document/qualification/export',
-                data: params,
-                responseType: 'blob'
-            }).then(response => {
-                // 创建一个Blob对象
-                const blob = new Blob([response.data], { type: response.headers['content-type'] })
-                
-                // 获取文件名
-                let fileName = '公司资质证书导出.xlsx'
-                const contentDisposition = response.headers['content-disposition']
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename=(.+)/)
-                    if (filenameMatch && filenameMatch.length > 1) {
-                        fileName = decodeURIComponent(filenameMatch[1])
+            // 先进行一次校验请求，确认是否有数据可以导出
+            request.post('/admin/document/qualification/search', params)
+                .then(response => {
+                    const result = this.processResponseData(response)
+                    if (!result.success) {
+                        return Promise.reject(new Error(result.msg || '查询数据失败'))
                     }
-                }
-                
-                // 创建下载链接
-                const link = document.createElement('a')
-                link.href = URL.createObjectURL(blob)
-                link.download = fileName
-                link.click()
-                
-                // 释放URL对象
-                URL.revokeObjectURL(link.href)
-                
-                this.$message.success('导出成功')
-            }).catch(error => {
-                console.error('导出失败:', error)
-                this.$message.error('导出失败，请稍后重试')
-            })
+                    
+                    if (result.total === 0) {
+                        return Promise.reject(new Error('没有数据可供导出'))
+                    }
+                    
+                    // 有数据可以导出，使用表单提交方式下载文件
+                    const form = document.createElement('form')
+                    form.method = 'post'
+                    form.action = `${process.env.VUE_APP_BASE_API || ''}/admin/document/qualification/export`
+                    form.target = '_blank'
+                    
+                    // 添加参数
+                    for (const key in params) {
+                        if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
+                            const input = document.createElement('input')
+                            input.type = 'hidden'
+                            input.name = key
+                            input.value = params[key]
+                            form.appendChild(input)
+                        }
+                    }
+                    
+                    // 添加token到header中
+                    if (this.$store.state.user.token) {
+                        const tokenInput = document.createElement('input')
+                        tokenInput.type = 'hidden'
+                        tokenInput.name = 'X-Token'
+                        tokenInput.value = this.$store.state.user.token
+                        form.appendChild(tokenInput)
+                    }
+                    
+                    document.body.appendChild(form)
+                    form.submit()
+                    document.body.removeChild(form)
+                    
+                    this.$message.success(`成功导出${result.total}条数据，文件很快将被下载`)
+                })
+                .catch(error => {
+                    console.error('导出失败:', error)
+                    this.$message.error(error.message || '导出失败，请稍后重试')
+                })
         },
         
         // 处理预警操作
