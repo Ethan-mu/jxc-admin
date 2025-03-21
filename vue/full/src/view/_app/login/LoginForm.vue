@@ -89,13 +89,12 @@ export default {
             this.$refs.form.validate(valid => {
                 if (!valid) return
                 this.loading = true
-                this.$verify()
-                    .then(() => this.$store.dispatch('user/login', {
-                        ...this.form,
-                        password: md5(this.form.password)
-                    }))
-                    .then(this.success)
-                    .catch(() => this.loading = false)
+                this.$store.dispatch('user/login', {
+                    ...this.form,
+                    password: md5(this.form.password)
+                })
+                .then(this.success)
+                .catch(() => this.loading = false)
             })
         },
 
