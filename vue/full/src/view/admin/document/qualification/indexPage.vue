@@ -52,8 +52,6 @@
                         <el-tag :type="getAlertStatusType(row.alertStatus)">{{row.alertStatus}}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="预警次数" prop="alertCount" width="80" align="center"/>
-                <el-table-column label="创建时间" prop="createTime" width="150" align="center"/>
                 <el-table-column label="操作" width="280" align="center" fixed="right">
                     <template slot-scope="{row}">
                         <el-button v-if="canView" type="text" size="mini" @click="view(row)">查看</el-button>
@@ -167,11 +165,9 @@
                 <el-descriptions-item label="预警状态">
                     <el-tag :type="getAlertStatusType(viewForm.alertStatus)">{{viewForm.alertStatus}}</el-tag>
                 </el-descriptions-item>
-                <el-descriptions-item label="预警次数">{{viewForm.alertCount || 0}}</el-descriptions-item>
                 <el-descriptions-item label="剩余天数">
                     <span :class="getRemainingDaysClass(viewForm.remainingDays)">{{getRemainingDaysText(viewForm.remainingDays)}}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="创建时间">{{viewForm.createTime}}</el-descriptions-item>
             </el-descriptions>
             <div slot="footer">
                 <el-button @click="viewDialogVisible = false">关闭</el-button>
