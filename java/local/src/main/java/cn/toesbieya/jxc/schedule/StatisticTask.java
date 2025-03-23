@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class StatisticTask {
 
         //检查是否已统计过昨日已完成的订单数
         if (!mapper.checkDailyFinishOrderExist(lastDay)) {
-            Integer lastDayPurchaseOrderFinish = mapper.getPurchaseOrderLastDayFinishOrderNum();
+            // 采购功能已移除，使用0替代
+            Integer lastDayPurchaseOrderFinish = 0;
             Integer lastDaySellOrderFinish = mapper.getSellOrderLastDayFinishOrderNum();
 
             StatFinishOrder param = new StatFinishOrder();
@@ -53,41 +55,16 @@ public class StatisticTask {
         //检查是否已统计过昨日的采购额、销售额、毛利
         if (!mapper.checkDailyProfitExist(lastDay)) {
             //昨日各个商品的采购额、销售额
-            List<StatProfitGoods> purchaseProfitGoods = mapper.getPurchaseOrderDailyProfitGoods(lastDay, today);
+            // 采购功能已移除，使用空列表替代
+            List<StatProfitGoods> purchaseProfitGoods = new ArrayList<>();
             List<StatProfitGoods> sellProfitGoods = mapper.getSellOrderDailyProfitGoods(lastDay, today);
 
             //昨日的采购总额、销售总额
             BigDecimal totalPurchase = new BigDecimal(0);
             BigDecimal totalSell = new BigDecimal(0);
 
-            //根据商品分类计算
-            Map<Integer, StatProfitGoods> map = new HashMap<>(sellProfitGoods.size());
-
-            for (StatProfitGoods p : sellProfitGoods) {
-                map.put(p.getCid(), p);
-            }
-
-            for (StatProfitGoods p : purchaseProfitGoods) {
-                p.setTime(lastDay);
-                Integer cid = p.getCid();
-                BigDecimal purchase = p.getPurchase();
-                totalPurchase = totalPurchase.add(purchase);
-                StatProfitGoods s = map.get(cid);
-
-                if (s != null) {
-                    BigDecimal sell = s.getSell();
-                    totalSell = totalSell.add(sell);
-                    p.setSell(sell);
-                    p.setProfit(sell.subtract(purchase));
-                    map.remove(cid);
-                }
-                else {
-                    p.setSell(new BigDecimal(0));
-                    p.setProfit(p.getSell().subtract(purchase));
-                }
-            }
-
-            for (StatProfitGoods s : map.values()) {
+            //处理销售数据
+            for (StatProfitGoods s : sellProfitGoods) {
                 s.setTime(lastDay);
                 s.setPurchase(new BigDecimal(0));
                 BigDecimal sell = s.getSell();
@@ -96,7 +73,7 @@ public class StatisticTask {
                 purchaseProfitGoods.add(s);
             }
 
-            BigDecimal totalProfit = totalSell.subtract(totalPurchase);
+            BigDecimal totalProfit = totalSell;
 
             StatProfitTotal statProfitTotal = new StatProfitTotal();
             statProfitTotal.setPurchase(totalPurchase);

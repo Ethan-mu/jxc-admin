@@ -1,0 +1,22 @@
+CREATE TABLE biz_special_equipment_worker_cert (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID，自增',
+    uid INT NOT NULL COMMENT '用户ID，关联用户表',
+    certificate_name VARCHAR(255) NOT NULL COMMENT '证书名称',
+    worker_name VARCHAR(255) NOT NULL COMMENT '持证人员姓名',
+    worker_contact VARCHAR(20) COMMENT '持证人员联系方式',
+    id_card VARCHAR(18) NOT NULL COMMENT '身份证号码',
+    gender ENUM('男','女') COMMENT '性别',
+    cert_type VARCHAR(100) NOT NULL COMMENT '取证种类',
+    position VARCHAR(100) COMMENT '岗位',
+    hire_date DATE COMMENT '入职时间',
+    issuer VARCHAR(255) COMMENT '发证单位',
+    leader_name VARCHAR(255) COMMENT '主管领导姓名',
+    leader_contact VARCHAR(20) COMMENT '主管领导联系方式',
+    operation_code VARCHAR(50) COMMENT '操作证编码',
+    issue_date DATE NOT NULL COMMENT '取证时间',
+    review_date DATE COMMENT '复审时间',
+    alert_status ENUM('未设置', '待预警', '已提醒', '已关闭') COMMENT '预警状态',
+    alert_count INT NULL COMMENT '预警次数',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) COMMENT '特种设备操作作业人员管理'; 

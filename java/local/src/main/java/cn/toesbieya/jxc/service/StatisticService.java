@@ -29,7 +29,7 @@ public class StatisticService {
 
         FourBlockStat stat = new FourBlockStat();
 
-        BigDecimal purchase = mapper.getPurchaseOrderDailyTotalPurchasePrice(now, null);
+        BigDecimal purchase = new BigDecimal(0); // 采购功能已移除，返回0
         BigDecimal sell = mapper.getSellOrderDailyTotalPurchasePrice(now, null);
 
         long onlineNum = WebSocketUtil.getOnlineUserNum();
@@ -62,7 +62,7 @@ public class StatisticService {
         //获取今日的信息
         long today = DateUtil.getTimestampNow();
         long nextDay = DateUtil.getTimestampBeforeNow(-1);
-        history.addAll(mapper.getPurchaseOrderDailyProfitGoods(today, nextDay));
+        // 采购功能已移除，不再调用采购相关的方法
         history.addAll(mapper.getSellOrderDailyProfitGoods(today, nextDay));
 
         Map<Integer, StatProfitGoods> map = new HashMap<>(history.size());

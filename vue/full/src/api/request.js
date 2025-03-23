@@ -13,6 +13,8 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     config => {
+        console.log('请求URL:', config.url, '当前token:', store.state.user.token ? '存在' : '不存在')
+        
         //登录状态下socket断连时，除登出外中断一切请求
         if (isLogin() && !store.state.websocket.online && config.url !== '/account/logout') {
             Message.error('请等待与服务器重新连接')
@@ -22,6 +24,9 @@ instance.interceptors.request.use(
         //header添加token
         if (store.state.user.token) {
             config.headers['X-Token'] = store.state.user.token
+            console.log('已添加X-Token到请求头:', config.url)
+        } else {
+            console.log('警告: 未添加X-Token到请求头，可能导致401未授权错误:', config.url)
         }
         return config
     },

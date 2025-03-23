@@ -70,38 +70,6 @@
         </foreach>
     </insert>
 
-    <select id="getPurchaseOrderDailyTotalPurchasePrice" resultType="java.math.BigDecimal">
-        select ifnull(sum(total), 0) total
-        from biz_purchase_order
-                where status = 2
-        <if test="start != null">
-            and vtime <![CDATA[ >= ]]> #{start}
-        </if>
-        <if test="end != null">
-            and vtime <![CDATA[ <= ]]> #{end}
-        </if>
-    </select>
-
-    <select id="getPurchaseOrderLastDayFinishOrderNum" resultType="java.lang.Integer">
-        select count(0)
-        from biz_purchase_order
-        where status = 2
-          and finish = 2
-          and ftime between unix_timestamp(cast(sysdate() as date) - interval 1 day) * 1000 and unix_timestamp(cast(sysdate() as date)) * 1000
-    </select>
-
-    <select id="getPurchaseOrderDailyProfitGoods" resultType="cn.toesbieya.jxc.model.entity.StatProfitGoods">
-        select t1.*,
-               t2.name cname
-        from (select a.cid,
-                     ifnull(sum(a.num * a.price), 0) purchase
-              from biz_purchase_order_sub a
-                           join biz_purchase_order b on a.pid = b.id
-              where b.vtime between #{start} and #{end}
-              group by a.cid) t1
-                     join sys_category t2 on t1.cid = t2.id
-    </select>
-
     <select id="getSellOrderDailyTotalPurchasePrice" resultType="java.math.BigDecimal">
         select ifnull(sum(total), 0) total
         from biz_sell_order

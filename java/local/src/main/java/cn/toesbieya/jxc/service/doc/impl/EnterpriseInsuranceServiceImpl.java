@@ -263,30 +263,9 @@ public class EnterpriseInsuranceServiceImpl extends ServiceImpl<EnterpriseInsura
             lambda.like(EnterpriseInsurance::getCompany, search.getCompany());
         }
         
-        // 保险日期范围
-        if (search.getStartDateBegin() != null) {
-            lambda.ge(EnterpriseInsurance::getStartDate, search.getStartDateBegin());
-        }
-        if (search.getStartDateEnd() != null) {
-            lambda.le(EnterpriseInsurance::getStartDate, search.getStartDateEnd());
-        }
-        
-        // 到期日期范围
-        if (search.getEndDateBegin() != null) {
-            lambda.ge(EnterpriseInsurance::getEndDate, search.getEndDateBegin());
-        }
-        if (search.getEndDateEnd() != null) {
-            lambda.le(EnterpriseInsurance::getEndDate, search.getEndDateEnd());
-        }
-        
         // 负责人姓名
         if (!StringUtils.isEmpty(search.getManagerName())) {
             lambda.like(EnterpriseInsurance::getManagerName, search.getManagerName());
-        }
-        
-        // 预警状态
-        if (!StringUtils.isEmpty(search.getAlertStatus())) {
-            lambda.eq(EnterpriseInsurance::getAlertStatus, search.getAlertStatus());
         }
         
         // 默认按ID降序排序

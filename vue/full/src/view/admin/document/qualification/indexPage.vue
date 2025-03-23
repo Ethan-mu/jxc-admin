@@ -1,36 +1,41 @@
 <template>
-    <div class="app-container">
-        <el-card>
+    <div class="app-container doc-page-container">
+        <el-card shadow="hover" style="height: 100%">
             <div slot="header">
-                <span>公司资质证书管理</span>
+                <el-form :inline="true" size="mini" @submit.native.prevent>
+                    <el-form-item>
+                        <el-input v-model.trim="search.certificateName" placeholder="证书名称" clearable/>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-input v-model.trim="search.issuingAuthority" placeholder="颁证单位" clearable/>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-input v-model.trim="search.managerName" placeholder="管理人员" clearable/>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-select v-model="search.alertStatus" placeholder="预警状态" clearable>
+                            <el-option label="未设置" value="未设置"/>
+                            <el-option label="待预警" value="待预警"/>
+                            <el-option label="已提醒" value="已提醒"/>
+                            <el-option label="已关闭" value="已关闭"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button-group>
+                            <el-button type="primary" icon="el-icon-search" @click="refresh(true)">查询</el-button>
+                            <el-button v-if="canAdd" type="primary" icon="el-icon-plus" @click="add">新增</el-button>
+                            <el-button type="primary" icon="el-icon-download" @click="exportData">导出</el-button>
+                        </el-button-group>
+                    </el-form-item>
+                </el-form>
             </div>
 
-            <el-form :inline="true" size="mini" @submit.native.prevent>
-                <el-form-item>
-                    <el-input v-model.trim="search.certificateName" placeholder="证书名称" clearable/>
-                </el-form-item>
-                <el-form-item>
-                    <el-input v-model.trim="search.issuingAuthority" placeholder="颁证单位" clearable/>
-                </el-form-item>
-                <el-form-item>
-                    <el-input v-model.trim="search.managerName" placeholder="管理人员" clearable/>
-                </el-form-item>
-                <el-form-item>
-                    <el-select v-model="search.alertStatus" placeholder="预警状态" clearable>
-                        <el-option label="未设置" value="未设置"/>
-                        <el-option label="待预警" value="待预警"/>
-                        <el-option label="已提醒" value="已提醒"/>
-                        <el-option label="已关闭" value="已关闭"/>
-                    </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" icon="el-icon-search" @click="refresh(true)">查询</el-button>
-                    <el-button v-if="canAdd" type="success" icon="el-icon-plus" @click="add">新增</el-button>
-                    <el-button type="info" icon="el-icon-download" @click="exportData">导出</el-button>
-                </el-form-item>
-            </el-form>
-
-            <el-table v-loading="loading" :data="data" border>
+            <el-table 
+                v-loading="loading" 
+                :data="data" 
+                :height="tableHeight"
+                style="width: 100%"
+            >
                 <el-table-column label="证书编号" prop="id" width="80" align="center"/>
                 <el-table-column label="证书名称" prop="certificateName" min-width="150"/>
                 <el-table-column label="颁证单位" prop="issuingAuthority" min-width="150"/>
@@ -52,19 +57,23 @@
                         <el-tag :type="getAlertStatusType(row.alertStatus)">{{row.alertStatus}}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="280" align="center" fixed="right">
+                <el-table-column label="操作" width="180" align="center" fixed="right">
                     <template slot-scope="{row}">
-                        <el-button v-if="canView" type="text" size="mini" @click="view(row)">查看</el-button>
-                        <el-button v-if="canUpdate" type="text" size="mini" @click="edit(row)">编辑</el-button>
-                        <el-button v-if="canDelete" type="text" size="mini" @click="del(row)">删除</el-button>
-                        <el-dropdown size="mini" split-button type="text" @command="handleAlertCommand($event, row)">
-                            预警操作
-                            <el-dropdown-menu slot="dropdown">
-                                <el-dropdown-item command="set">设置预警</el-dropdown-item>
-                                <el-dropdown-item command="remind">标记已提醒</el-dropdown-item>
-                                <el-dropdown-item command="close">关闭预警</el-dropdown-item>
-                            </el-dropdown-menu>
-                        </el-dropdown>
+                        <el-button-group>
+                            <el-button v-if="canUpdate" type="primary" size="mini" @click="edit(row)">编辑</el-button>
+                            <el-button v-if="canDelete" type="danger" size="mini" @click="del(row)">删除</el-button>
+                            <el-dropdown trigger="click" @command="handleCommand($event, row)">
+                                <el-button type="primary" size="mini">
+                                    更多<i class="el-icon-arrow-down el-icon--right"></i>
+                                </el-button>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item v-if="canView" command="view">查看详情</el-dropdown-item>
+                                    <el-dropdown-item command="setAlert">设置预警</el-dropdown-item>
+                                    <el-dropdown-item command="remindAlert">标记已提醒</el-dropdown-item>
+                                    <el-dropdown-item command="closeAlert">关闭预警</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </el-button-group>
                     </template>
                 </el-table-column>
             </el-table>
@@ -75,8 +84,9 @@
                 :page-size.sync="page.size"
                 :total="total"
                 layout="total, sizes, prev, pager, next, jumper"
-                :page-sizes="[10, 20, 30, 50]"
-                class="pagination"
+                :page-sizes="[10, 20, 50, 100]"
+                style="margin-top: 15px; text-align: right"
+                background
                 @size-change="refresh()"
                 @current-change="refresh()"
             />
@@ -188,6 +198,7 @@ export default {
         return {
             loading: false,
             submitting: false,
+            tableHeight: 'calc(100vh - 280px)',
             
             search: {
                 certificateName: '',
@@ -539,15 +550,18 @@ export default {
         },
         
         // 处理预警操作
-        handleAlertCommand(command, row) {
+        handleCommand(command, row) {
             switch (command) {
-                case 'set':
+                case 'view':
+                    this.view(row)
+                    break
+                case 'setAlert':
                     this.setAlert(row.id)
                     break
-                case 'remind':
+                case 'remindAlert':
                     this.updateAlertStatus(row.id, '已提醒')
                     break
-                case 'close':
+                case 'closeAlert':
                     this.closeAlert(row.id)
                     break
             }

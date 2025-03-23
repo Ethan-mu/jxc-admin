@@ -1,0 +1,143 @@
+/* 档案管理统一样式 */
+
+/* 页面容器样式 */
+.doc-page-container .el-card {
+  height: 100%;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 表格样式 */
+.doc-page-container .el-table {
+  width: 100%;
+  height: calc(100% - 70px);
+}
+
+/* 表单项样式 */
+.doc-page-container .el-form-item {
+  margin-bottom: 18px;
+}
+
+/* 按钮组样式 */
+.doc-page-container .el-button-group {
+  margin-right: 10px;
+}
+
+/* 分页组件样式 */
+.doc-page-container .el-pagination {
+  margin-top: 15px;
+  text-align: right;
+}
+
+/* 表格状态文本样式 */
+.doc-page-container .status-text {
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.doc-page-container .status-normal {
+  color: #67c23a;
+}
+
+.doc-page-container .status-warning {
+  color: #e6a23c;
+}
+
+.doc-page-container .status-danger {
+  color: #f56c6c;
+}
+
+/* 剩余天数样式 */
+.doc-page-container .remaining-days {
+  font-weight: bold;
+}
+
+.doc-page-container .remaining-days.normal {
+  color: #67c23a;
+}
+
+.doc-page-container .remaining-days.warning {
+  color: #e6a23c;
+}
+
+.doc-page-container .remaining-days.expired {
+  color: #f56c6c;
+}
+
+/* 弹窗样式 */
+.doc-page-container .el-dialog__body {
+  padding: 20px 30px;
+}
+
+/* 统一文本颜色样式 */
+.doc-page-container .text-success {
+  color: #67c23a;
+}
+
+.doc-page-container .text-warning {
+  color: #e6a23c;
+}
+
+.doc-page-container .text-danger {
+  color: #f56c6c;
+}
+
+/* 统一下拉菜单样式 */
+.doc-page-container .el-dropdown {
+  margin-left: 5px;
+}
+
+.doc-page-container .el-dropdown-menu__item {
+  padding: 8px 20px;
+  font-size: 13px;
+}
+
+/* 统一表格内容垂直居中 */
+.doc-page-container .el-table .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 统一标签样式 */
+.doc-page-container .el-tag {
+  padding: 0 8px;
+  height: 24px;
+  line-height: 22px;
+}
+
+/* 表格固定列阴影效果 */
+.doc-page-container .el-table .is-right-fixed {
+  box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.12);
+}
+
+/* 统一搜索表单样式 */
+.doc-page-container .el-card__header .el-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* 卡片内容区域样式 */
+.doc-page-container .el-card__body {
+  padding: 10px 20px;
+  height: calc(100% - 60px);
+}
+
+/* 按钮颜色统一 */
+.doc-page-container .el-dropdown__caret-button {
+  background-color: #409EFF;
+  border-left-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.doc-page-container .el-button--primary.is-plain {
+  color: #409EFF;
+}
+
+/* 标题样式统一 */
+.doc-page-container .el-card__header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #EBEEF5;
+  box-sizing: border-box;
+  background-color: #F5F7FA;
+} 

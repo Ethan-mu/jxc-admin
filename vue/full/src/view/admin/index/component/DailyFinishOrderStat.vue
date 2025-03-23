@@ -20,19 +20,17 @@ export default {
                 .request()
                 .then(({data}) => {
                     const time = []
-                    const purchase = []
                     const sell = []
                     data.forEach(i => {
                         time.push(timeFormat('MM 月 dd日', new Date(i.time)))
-                        purchase.push(i.purchase)
                         sell.push(i.sell)
                     })
-                    this.setOptions({time, purchase, sell})
+                    this.setOptions({time, sell})
                 })
                 .finally(() => this.loading = false)
         },
 
-        setOptions({time, purchase, sell}) {
+        setOptions({time, sell}) {
             this.chart.setOption({
                 title: {
                     text: '历史七天订单完成情况统计',
@@ -65,16 +63,10 @@ export default {
                     }
                 },
                 legend: {
-                    data: ['采购订单', '销售订单'],
+                    data: ['销售订单'],
                     right: 10
                 },
                 series: [
-                    {
-                        name: '采购订单',
-                        smooth: true,
-                        type: 'line',
-                        data: purchase
-                    },
                     {
                         name: '销售订单',
                         smooth: true,

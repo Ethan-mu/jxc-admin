@@ -15,7 +15,7 @@
     <description>简易进销存</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
         <mybatis-plus.version>3.3.2</mybatis-plus.version>
         <pagehelper.version>1.2.12</pagehelper.version>
         <socketio.version>1.7.18</socketio.version>
@@ -115,6 +115,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
