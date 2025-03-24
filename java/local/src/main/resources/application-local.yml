@@ -4,7 +4,7 @@ spring:
     username: lzz
     password: Lzz4450..
   redis:
-    host: localhost
+    host: 8.130.96.6
     port: 6379
 
 socket:

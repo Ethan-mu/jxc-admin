@@ -28,6 +28,17 @@
                     @click="search"
                 />
 
+                <el-button
+                    v-if="canAdd"
+                    circle
+                    icon="el-icon-plus"
+                    size="small"
+                    style="margin-right: 20px"
+                    title="添加根部门"
+                    type="primary"
+                    @click="addRoot"
+                />
+
                 <zoom-control v-model="zoom" :max="200" :min="20"/>
             </div>
         </div>
@@ -72,12 +83,23 @@ export default {
         ...wic({add, update, del}),
 
         contextMenuItems() {
-            return [
-                this.canAdd && {content: '添 加', click: this.add},
-                {content: '查 看', click: this.see},
-                this.canUpdate && {content: '编 辑', click: this.edit},
-                this.canDel && {content: '删 除', click: this.del}
-            ]
+            const items = []
+            
+            if (this.canAdd) {
+                items.push({content: '添 加', click: this.add})
+            }
+            
+            items.push({content: '查 看', click: this.see})
+            
+            if (this.canUpdate) {
+                items.push({content: '编 辑', click: this.edit})
+            }
+            
+            if (this.canDel) {
+                items.push({content: '删 除', click: this.del})
+            }
+            
+            return items
         },
 
         realZoom() {
@@ -116,6 +138,15 @@ export default {
             if (zoom >= 20 && zoom <= 200) {
                 this.zoom = zoom
             }
+        },
+        
+        // 添加根部门
+        addRoot() {
+            this.currentNode = {
+                id: 1,
+                name: '公司总部'
+            }
+            this.add()
         },
 
         add() {

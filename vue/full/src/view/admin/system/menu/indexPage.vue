@@ -66,7 +66,13 @@
             </el-col>
 
             <el-col :xs="24" :sm="13" :md="15" :lg="13" :xl="11">
-                <abstract-form v-if="showForm" :model="form" :rules="rules">
+                <abstract-form 
+                    ref="form"
+                    v-if="showForm" 
+                    :model="form" 
+                    :rules="rules"
+                    label-width="100px"
+                >
                     <el-form-item label="类型">
                         <el-select
                             v-if="showTypeSelector"
@@ -101,50 +107,69 @@
                         {{ getParentNodeInfo().title }}
                     </el-form-item>
 
-                    <el-form-item label="名称" prop="title">
-                        <el-input v-if="form.type === 3" v-model="form.name" maxlength="10"/>
-                        <template v-else>{{ form.meta.title }}</template>
+                    <el-form-item 
+                        v-if="form.type !== 3" 
+                        label="标题" 
+                        prop="meta.title"
+                    >
+                        <el-input v-model="form.meta.title" placeholder="请输入标题"/>
+                    </el-form-item>
+
+                    <el-form-item v-else label="名称" prop="name">
+                        <el-input v-model="form.name" placeholder="请输入名称"/>
                     </el-form-item>
 
                     <el-form-item label="路径" prop="path">
-                        <el-input v-model="form.path" maxlength="100"/>
+                        <el-input v-model="form.path" placeholder="请输入路径"/>
                     </el-form-item>
 
-                    <!--菜单独有配置项-->
-                    <template v-if="form.type !== 3">
-                        <!--叶子菜单独有配置项-->
-                        <template v-if="form.type === 2">
-                            <el-form-item label="路由名称" prop="name">
-                                <el-input v-model="form.name" maxlength="50"/>
-                            </el-form-item>
-                            <el-form-item label="菜单组件" prop="component">
-                                <el-input v-model="form.component" maxlength="50"/>
-                            </el-form-item>
-                        </template>
-
-                        <el-form-item label="meta" prop="meta">
-                            <json-editor v-model="form.metaStr" @input="metaChange"/>
-                        </el-form-item>
-                    </template>
-
-                    <el-form-item label="admin独有">
-                        <el-switch v-model="form.admin" active-text="是" inactive-text="否"/>
+                    <el-form-item v-if="form.type === 2" label="组件">
+                        <el-input v-model="form.component" placeholder="请输入组件路径"/>
                     </el-form-item>
 
-                    <el-form-item label="是否启用">
-                        <el-switch v-model="form.enable" active-text="是" inactive-text="否"/>
+                    <el-form-item v-if="form.type !== 3" label="图标">
+                        <el-input v-model="form.meta.icon" placeholder="请输入图标名称">
+                            <template v-slot:prepend>
+                                <v-icon v-if="form.meta.icon" :icon="form.meta.icon"/>
+                                <i v-else>无</i>
+                            </template>
+                        </el-input>
                     </el-form-item>
 
-                    <el-form-item v-if="showSaveBtn">
+                    <el-form-item v-if="form.type !== 3" label="排序">
+                        <el-input-number v-model="form.meta.sort" :min="0" :step="1" style="width: 140px"/>
+                    </el-form-item>
+
+                    <el-form-item v-if="form.type === 2 && form.component" label="路由名称">
+                        <el-input v-model="form.name" placeholder="请输入路由名称"/>
+                    </el-form-item>
+
+                    <el-form-item v-if="form.type !== 3" label="Meta配置">
+                        <json-editor 
+                            v-model="form.metaStr" 
+                            @change="metaChange" 
+                            @input="metaChange"
+                        />
+                    </el-form-item>
+
+                    <el-form-item label="专属管理员">
+                        <el-switch v-model="form.admin"/>
+                    </el-form-item>
+
+                    <el-form-item label="启用">
+                        <el-switch v-model="form.enable"/>
+                    </el-form-item>
+
+                    <el-form-item>
                         <el-button
-                            :loading="loading"
-                            icon="el-icon-edit-outline"
-                            size="small"
+                            v-if="showSaveBtn"
                             type="primary"
+                            :loading="loading"
                             @click="save"
                         >
-                            保 存
+                            保存
                         </el-button>
+                        <el-button @click="curNode = null">取消</el-button>
                     </el-form-item>
                 </abstract-form>
             </el-col>
@@ -171,45 +196,54 @@ export default {
     components: {AbstractForm, JsonEditor},
 
     data() {
-        const validateTitle = (r, v, c) => {
-            const value = getNodeTitle({data: this.form})
-            c(isEmpty(value) ? '名称不能为空' : undefined)
+        const validateTitle = (rule, value, callback) => {
+            if (this.form && this.form.type !== 3 && (!this.form.meta || isEmpty(this.form.meta.title))) {
+                callback(new Error('标题不能为空'))
+            } else {
+                callback()
+            }
+        }
+        const validateName = (rule, value, callback) => {
+            if (isEmpty(value)) {
+                callback(new Error('名称不能为空'))
+            } else {
+                callback()
+            }
         }
         return {
             showTip: process.env.NODE_ENV !== 'development',
 
             loading: false,
-            search: null,
-            type: 'add',// add or edit
+            search: '',
+            curNode: null,
+            type: 'edit', //标记是添加(add)还是编辑(edit)操作
             nodeType,
             form: {
                 id: null,
                 pid: null,
+                name: '',
                 type: null,
-                name: null,
-                path: null,
-                component: null,
+                path: '',
+                component: '',
                 meta: {
-                    title: null,
-                    dynamicTitle: null,
+                    title: '',
+                    icon: '',
+                    sort: 0,
                     hidden: false,
-                    sort: null,
-                    icon: null,
-                    affix: false,
-                    noCache: false,
-                    activeMenu: null,
+                    activeMenu: '',
                     noAuth: false,
-                    iframe: null,
+                    iframe: '',
                     usePathKey: false,
                     useFullPathKey: false
                 },
-                metaStr: null,
+                metaStr: '',
                 admin: false,
                 enable: true
             },
             rules: {
-                title: [{validator: validateTitle, trigger: 'change'}],
-                path: [{required: true, message: '路径不能为空', trigger: 'change'}],
+                'meta.title': [{validator: validateTitle, trigger: 'blur'}],
+                'name': [{validator: validateName, trigger: 'blur'}],
+                'path': [{required: true, message: '路径不能为空', trigger: 'blur'}],
             }
         }
     },
@@ -244,6 +278,10 @@ export default {
         }
     },
 
+    created() {
+        this.init()
+    },
+
     methods: {
         getNodeInfo,
         getNodeTitle,
@@ -256,25 +294,60 @@ export default {
             if (isEmpty(value)) return true
             return getNodeTitle({data}).includes(value)
         },
+        nodeClick(data, node) {
+            if (this.curNode === node) {
+                this.$refs.tree.setCurrentKey()
+                this.curNode = null
+                this.clearForm()
+                return
+            }
+            
+            this.curNode = node
+            this.afterNodeClick(data, node, this.$refs.form)
+        },
         afterNodeClick(data, node, ref, clear) {
-            if (clear) return this.clearForm()
+            if (clear) {
+                this.clearForm()
+                return
+            }
+            
             this.type = 'edit'
             this.$refs.form && this.$refs.form.clearValidate()
-            mergeObj(this.form, data)
+            
+            // 深度复制对象，避免直接引用
+            this.form.id = data.id
+            this.form.pid = data.pid
+            this.form.name = data.name || ''
+            this.form.type = data.type
+            this.form.path = data.path || ''
+            this.form.component = data.component || ''
+            this.form.admin = !!data.admin
+            this.form.enable = data.enable !== false
+            
+            // 处理meta数据
+            resetObj(this.form.meta)
             if (data.meta) {
+                mergeObj(this.form.meta, data.meta)
                 this.form.metaStr = JSON.stringify(data.meta, null, 2)
+            } else {
+                this.form.metaStr = JSON.stringify({
+                    title: this.form.meta.title || '',
+                    icon: this.form.meta.icon || '',
+                    sort: this.form.meta.sort || 0
+                }, null, 2)
             }
         },
         //json编辑器值改变时
         metaChange(v) {
             try {
                 v = JSON.parse(v)
+                resetObj(this.form.meta)
+                mergeObj(this.form.meta, v)
             }
             catch (e) {
+                console.error('JSON解析错误:', e)
                 return
             }
-            resetObj(this.form.meta)
-            mergeObj(this.form.meta, v)
         },
         //表单中菜单类型选择器改变时
         typeChange(v) {
@@ -292,17 +365,41 @@ export default {
             this.clearForm()
             this.form.pid = 0
             this.form.type = 0
+            
+            // 确保meta对象正确初始化
+            if (!this.form.meta) {
+                this.form.meta = {
+                    title: '',
+                    icon: '',
+                    sort: 0
+                }
+            }
+            
+            this.form.metaStr = JSON.stringify(this.form.meta, null, 2)
         },
         addChild() {
             if (this.loading) return
             if (!this.curNode) return elError('请选择一个节点')
             const {data: {id, type}} = this.curNode
             if (type === 3) return elError('数据接口不能作为父节点')
+            
             this.type = 'add'
             this.clearForm()
             this.form.pid = id
+            
             //如果父节点是叶子菜单，那么只能添加接口
             this.form.type = type === 2 ? 3 : 1
+            
+            // 确保meta对象正确初始化
+            if (!this.form.meta) {
+                this.form.meta = {
+                    title: '',
+                    icon: '',
+                    sort: 0
+                }
+            }
+            
+            this.form.metaStr = JSON.stringify(this.form.meta, null, 2)
         },
         del() {
             if (this.loading) return
@@ -333,29 +430,106 @@ export default {
             this.form.id = null
             this.form.pid = null
             this.form.type = null
-            this.form.metaStr = JSON.stringify({title: ''}, null, 2)
-            this.form.meta.sort = null
+            this.form.name = ''
+            this.form.path = ''
+            this.form.component = ''
+            
+            // 确保meta对象存在并有默认值
+            if (!this.form.meta) {
+                this.form.meta = {}
+            }
+            resetObj(this.form.meta)
+            this.form.meta.title = ''
+            this.form.meta.icon = ''
+            this.form.meta.sort = 0
+            
+            // 初始化metaStr
+            this.form.metaStr = JSON.stringify({
+                title: '',
+                icon: '',
+                sort: 0
+            }, null, 2)
+            
+            this.form.admin = false
             this.form.enable = true
         },
         save() {
             if (this.loading) return
-            this.$refs.form.validate(v => {
-                if (!v) return
-                this.loading = true
-                const data = this.transformForm()
-                const promise = this.type === 'add' ? add.request(data) : update.request(data)
-                promise
-                    .then(({data, msg}) => {
-                        elSuccess(msg)
-                        return this.init()
-                    })
-                    .finally(() => this.loading = false)
+            
+            // 对于接口类型的菜单，不需要验证meta.title
+            if (this.form.type === 3) {
+                this.$refs.form.clearValidate('meta.title')
+            }
+            
+            this.$refs.form.validate(valid => {
+                if (!valid) {
+                    console.log('表单验证失败')
+                    elError('表单验证失败，请检查输入')
+                    return false
+                }
+                
+                try {
+                    this.loading = true
+                    const data = this.transformForm()
+                    console.log('提交的数据:', data)
+                    
+                    if (!data.type && data.type !== 0) {
+                        throw new Error('菜单类型不能为空')
+                    }
+                    
+                    const promise = this.type === 'add' ? add.request(data) : update.request(data)
+                    promise
+                        .then(({data, msg}) => {
+                            elSuccess(msg)
+                            return this.init()
+                        })
+                        .catch(error => {
+                            console.error('保存失败:', error)
+                            elError('保存失败：' + (error.message || '未知错误'))
+                        })
+                        .finally(() => this.loading = false)
+                } catch (e) {
+                    this.loading = false
+                    elError(e.message || '数据处理错误')
+                }
             })
         },
         //将this.form转换为真正的提交数据（meta替换为metaStr）
         transformForm() {
-            return {...this.form, meta: this.form.metaStr, metaStr: undefined}
+            let meta = {}
+            try {
+                meta = JSON.parse(this.form.metaStr)
+            } catch (e) {
+                console.error('Meta JSON解析错误:', e)
+                // 如果解析失败，使用现有的meta对象
+                meta = {...this.form.meta}
+            }
+            
+            return {
+                id: this.form.id,
+                pid: this.form.pid,
+                name: this.form.name,
+                type: this.form.type,
+                path: this.form.path,
+                component: this.form.component,
+                meta: meta,
+                admin: this.form.admin,
+                enable: this.form.enable
+            }
         }
     }
 }
 </script>
+
+<style scoped>
+.button-group {
+    margin-bottom: 15px;
+}
+.tip-row {
+    background-color: #ffecec;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    color: #f56c6c;
+}
+</style>

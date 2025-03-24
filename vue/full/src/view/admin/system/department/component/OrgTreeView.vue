@@ -1,127 +1,114 @@
 <template>
-    <div :style="orgTreeStyle" class="org-tree-wrapper" @mousedown="mousedownView">
-        <org-tree :data="data" :horizontal="horizontal" collapsable expand-all @on-node-click="nodeClick">
-            <div
-                slot-scope="data"
-                :class="{'has-children-label':data.children && data.children.length}"
-                class="custom-org-node"
-                @contextmenu.prevent="e => $emit('node-contextmenu',e,data)"
-            >
-                {{ data.label }}
-            </div>
-        </org-tree>
+    <div class="org-tree-container">
+        <div
+            v-if="data"
+            :class="['org-tree', {'horizontal': horizontal}]"
+            :style="{transform: `scale(${zoom})`, transformOrigin: '50% 0'}"
+        >
+            <org-tree-node
+                :data="data"
+                :props="props"
+                :horizontal="horizontal"
+                :label-width="labelWidth"
+                :collapsable="collapsable"
+                :render-content="renderContent"
+                :label-class-name="labelClassName"
+                @on-expand="handleExpand"
+                @on-node-click="(e, data) => $emit('node-click', e, data)"
+                @on-node-mouseover="(e, data) => $emit('node-mouseover', e, data)"
+                @on-node-mouseout="(e, data) => $emit('node-mouseout', e, data)"
+                @on-node-contextmenu="(e, data) => $emit('node-contextmenu', e, data)"
+            />
+        </div>
+        <div v-else class="org-tree-empty">暂无数据</div>
     </div>
 </template>
 
 <script>
-import OrgTree from '@/component/OrgTree'
+/**
+ * 该组件使用vue-org-tree
+ * GitHub: https://github.com/huangwei9527/vue-org-tree
+ * 安装：npm install vue-org-tree --save
+ */
+import OrgTreeNode from './OrgTreeNode'
 
 export default {
     name: "OrgTreeView",
-
-    components: {OrgTree},
-
+    
+    components: {OrgTreeNode},
+    
     props: {
-        data: {type: Object, default: () => ({})},
+        data: {
+            type: Object,
+            required: true
+        },
+        props: {
+            type: Object,
+            default: () => ({
+                label: 'label',
+                expand: 'expand',
+                children: 'children'
+            })
+        },
         horizontal: Boolean,
         collapsable: Boolean,
-        zoom: {type: Number, default: 1},
-    },
-
-    data() {
-        return {
-            orgTreeOffsetLeft: 0,
-            orgTreeOffsetTop: 0,
-            initPageX: 0,
-            initPageY: 0,
-            oldMarginLeft: 0,
-            oldMarginTop: 0,
-            canMove: false,
-            expandAll: true
+        renderContent: Function,
+        labelWidth: {
+            type: [String, Number],
+            default: 'auto'
+        },
+        labelClassName: [Function, String],
+        zoom: {
+            type: Number,
+            default: 1
         }
     },
-
-    computed: {
-        orgTreeStyle() {
-            return {
-                transform: `translate(-50%, -50%) scale(${this.zoom}, ${this.zoom})`,
-                marginLeft: `${this.orgTreeOffsetLeft}px`,
-                marginTop: `${this.orgTreeOffsetTop}px`
-            }
-        }
-    },
-
+    
     methods: {
-        nodeClick(e, data, expand) {
-            expand()
-        },
-
-        mousedownView(event) {
-            this.canMove = true
-            this.initPageX = event.pageX
-            this.initPageY = event.pageY
-            this.oldMarginLeft = this.orgTreeOffsetLeft
-            this.oldMarginTop = this.orgTreeOffsetTop
-            window.addEventListener('mousemove', this.mousemoveView)
-            window.addEventListener('mouseup', this.mouseupView)
-        },
-        mousemoveView(event) {
-            if (!this.canMove) return
-            const {pageX, pageY} = event
-            this.orgTreeOffsetLeft = this.oldMarginLeft + pageX - this.initPageX
-            this.orgTreeOffsetTop = this.oldMarginTop + pageY - this.initPageY
-        },
-        mouseupView() {
-            this.canMove = false
-            window.removeEventListener('mousemove', this.mousemoveView)
-            window.removeEventListener('mouseup', this.mouseupView)
+        handleExpand(e, data) {
+            this.$emit('on-expand', e, data)
         }
     }
 }
 </script>
 
 <style lang="scss">
-.org-tree-wrapper {
-    cursor: move;
+.org-tree-container {
     display: inline-block;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transition: transform 0.2s ease-out;
-    z-index: 2;
-
-    .org-tree-node-label {
-        .org-tree-node-label-inner {
-            padding: 0;
-
-            .custom-org-node {
-                padding: 14px 41px;
-                background: #738699;
-                user-select: none;
-                word-wrap: normal;
-                white-space: nowrap;
-                border-radius: 4px;
-                color: #ffffff;
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 20px;
-                transition: background 0.1s ease-in;
-                cursor: default;
-
-                &:hover {
-                    background: #5d6c7b;
-                    transition: background 0.1s ease-in;
-                }
-
-                &.has-children-label {
-                    cursor: pointer;
-                }
-            }
+    padding: 15px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    
+    .org-tree {
+        display: inline-block;
+        min-height: 100%;
+        min-width: 100%;
+        
+        &.horizontal {
+            display: flex;
+            align-items: center;
+            min-height: 100%;
         }
     }
+    
+    .org-tree-empty {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        color: #909399;
+        font-size: 14px;
+    }
+}
 
-    .horizontal .custom-org-node {
-        padding: 14px 19px;
+.org-tree-node-label {
+    cursor: pointer;
+    
+    &:hover {
+        background-color: rgba(100, 142, 255, 0.1);
+        color: #2d8cf0;
     }
 }
 </style>

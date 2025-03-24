@@ -71,7 +71,7 @@ public class SysDepartmentService {
         }
 
         //指定部门
-        if (scope == DataScopeEnum.SPECIFIC.getCode()) {
+        if (scope == DataScopeEnum.CUSTOM.getCode()) {
             String deptIds = role.getDepartmentId();
             if (StringUtils.isEmpty(deptIds)) {
                 return Collections.emptySet();

@@ -1,47 +1,83 @@
-<script type="text/jsx">
+<template>
+    <div class="zoom-control">
+        <el-button
+            circle
+            icon="el-icon-minus"
+            size="small"
+            title="缩小"
+            type="info"
+            @click="decrease"
+        />
+        <span class="zoom-text">{{ zoom }}%</span>
+        <el-button
+            circle
+            icon="el-icon-plus"
+            size="small"
+            title="放大"
+            type="info"
+            @click="increase"
+        />
+    </div>
+</template>
+
+<script>
 export default {
     name: "ZoomControl",
-
-    functional: true,
-
+    
     props: {
-        value: {type: Number, default: 100},
-        step: {type: Number, default: 20},
-        min: {type: Number, default: 10},
-        max: {type: Number, default: 200}
+        value: {
+            type: Number,
+            default: 100
+        },
+        step: {
+            type: Number,
+            default: 10
+        },
+        min: {
+            type: Number,
+            default: 50
+        },
+        max: {
+            type: Number,
+            default: 150
+        }
     },
-
-    render(h, context) {
-        const {value, step, max, min} = context.props
-        const input = context.listeners.input
-
-        function zoomIn() {
-            const zoom = value + step
-            if (zoom <= max) input(zoom)
+    
+    computed: {
+        zoom: {
+            get() {
+                return this.value
+            },
+            set(val) {
+                let value = Math.min(Math.max(val, this.min), this.max)
+                this.$emit('input', value)
+            }
         }
-
-        function zoomOut() {
-            const zoom = value - step
-            if (zoom >= min) input(zoom)
+    },
+    
+    methods: {
+        increase() {
+            this.zoom += this.step
+        },
+        
+        decrease() {
+            this.zoom -= this.step
         }
-
-        return (
-            <div class="zoom-wrapper">
-                <el-button circle icon="el-icon-minus" size="small" title="缩小" type="info" on-click={zoomOut}/>
-                <span class="zoom-number">{value}%</span>
-                <el-button circle icon="el-icon-plus" size="small" title="放大" type="info" on-click={zoomIn}/>
-            </div>
-        )
     }
 }
 </script>
 
-<style>
-.zoom-wrapper .zoom-number {
-    color: #657180;
-    padding: 0 10px;
-    display: inline-block;
-    width: 60px;
-    text-align: center;
+<style lang="scss" scoped>
+.zoom-control {
+    display: flex;
+    align-items: center;
+    
+    .zoom-text {
+        display: inline-block;
+        width: 50px;
+        text-align: center;
+        font-size: 14px;
+        color: #606266;
+    }
 }
 </style>
