@@ -1,5 +1,5 @@
 # 使用JDK8作为基础镜像
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jdk-alpine
 
 # 设置工作目录
 WORKDIR /app

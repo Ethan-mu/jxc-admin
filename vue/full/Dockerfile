@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:14 as build-stage
+FROM node:16 as build-stage
 
 # 设置工作目录
 WORKDIR /app
